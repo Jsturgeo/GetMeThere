@@ -4,17 +4,10 @@ import pprint
 import time
 from haversine import haversine
 
-current_location = [-123.114867, 49.283481]
-destination_coords =  [-123.15113, 49.274196]#[-123.092092, 49.262653]
+current_location = [-123.114867, 49.283481] # BCIT Downtown
+destination_coords =  [-123.15113, 49.274196] # Kits Beach
 
-pp = pprint.PrettyPrinter(indent=4)
-
-locations_url = 'https://bookit.modo.coop/api/fleet/locations'
-neighborhoods_url = 'https://bookit.modo.coop/api/fleet/neighbourhoods'
 availability_url = 'https://bookit.modo.coop/api/availability'
-
-
-
 
 def parse_mobi_data(raw_data):
 	mobi_cars = []
@@ -33,8 +26,8 @@ def get_closest_cars(current_location, mobi_data, top_n=3):
 	sorted_cars = sorted(cars_data, key=lambda x: x[0])
 	return sorted_cars[:top_n]
 
-def potential_routes(current_location, closest_cars, destination_coords, method='drive'):
-	first_legs = [{'start_coord' : current_location, 'end_coord' : car[1][1], 'mode' : 'walk'} for car in closest_cars]
+def potential_routes(current_location, closest_cars, destination_coords, method='driving'):
+	first_legs = [{'start_coord' : current_location, 'end_coord' : car[1][1], 'mode' : 'walking'} for car in closest_cars]
 	last_legs = [{'start_coord' : car[1][1], 'end_coord' : destination_coords, 'mode' : method} for car in closest_cars]
 	full_routes = zip(first_legs, last_legs)
 	return full_routes
@@ -46,10 +39,9 @@ def get_mobi_data():
 	raw_data = resp_json['Data']
 	return raw_data
 
-
 def get_trips_routes():
 	raw_data = get_mobi_data()
 	parsed_data = parse_mobi_data(raw_data)
 	closest_cars = get_closest_cars(current_location, parsed_data)
-	routes = potential_routes(current_location, closest_cars, destination_coords, method='drive')
+	routes = potential_routes(current_location, closest_cars, destination_coords)
 	return routes
