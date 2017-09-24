@@ -24,6 +24,28 @@ from docopt import docopt
 import googlemaps
 from dotenv import load_dotenv, find_dotenv
 
+MODES = ['driving', 'walking', 'bicycling', 'transit']
+
+def fit_with_distance_duration(legs):
+    '''Enriches list of legs with information on travel distance and duration.
+
+    Arguments:
+    legs:  dictionary with keys 'start_coord', 'end_coord', 'mode'
+
+    Returns:
+    dictionary with keys: 'start_coord', 'end_coord',
+                          'mode', 'distance', 'duration'.
+                          Meters and seconds.
+    '''
+    for leg in legs:
+        dist_dur = get_distance_duration(leg['start_coord'], leg['end_coord'],
+                                         leg['mode'])
+        distance = dist_dur['distance']['value']
+        duration = dist_dur['duration']['value']
+        leg['distance'] = distance
+        leg['duration'] = duration
+    return leg
+
 def get_distance_duration(origin, destination, mode='walking'):
     '''Returns distance and duration based on two points and mode.
 
@@ -42,7 +64,7 @@ def get_distance_duration(origin, destination, mode='walking'):
                                               mode=mode,
                                               departure_time=now)
     res = directions_result['rows'][0]['elements'][0]
-    return(res)
+    return res
 
 load_dotenv(find_dotenv())
 gmaps = googlemaps.Client(key=os.environ.get('GMAP_API_KEY'))
