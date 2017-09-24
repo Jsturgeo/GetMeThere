@@ -4,6 +4,8 @@ import pprint
 import time
 from haversine import haversine
 from google_maps_api import fit_with_distance_duration
+from route import Route
+from leg import Leg
 
 start_coords = [-123.114867, 49.283481] # BCIT Downtown
 end_coords =  [-123.15113, 49.274196] # Kits Beach
@@ -15,25 +17,25 @@ def parse_mobi_data(raw_data, start_time):
 	mobi_cars = []
 	for key in raw_data.keys():
 		car = raw_data[key]
-		if car['Duration'] == 'throttled' or car['Start Time'] != start_time:
+		if car['Duration'] == 'throttled': #or car['StartTime'] != start_time:
 			continue
-		mobi_cars.append((car['CarID'], [float(car['Longitude']), float(car['Latitude'])], 
-			{'description' : car['CarDescription'], 'location_name' : car['LocationName'], 'start_time' : car['Start Time'], 'end_time' : car['EndTime']}))
+		mobi_cars.append(([float(car['Longitude']), float(car['Latitude'])], 
+			{'description' : car['CarDescription'], 'location_name' : car['LocationName'], 'start_time' : car['StartTime'], 'end_time' : car['EndTime']}))
 	return mobi_cars
 
 def get_closest_cars(current_location, mobi_data, top_n=3):
 	cars_data = []
 	for car in mobi_data:
-		dist_from_current = haversine(car[1], current_location)
+		dist_from_current = haversine(car[0], current_location)
 		cars_data.append((dist_from_current, car))
 	sorted_cars = sorted(cars_data, key=lambda x: x[0])
 	return sorted_cars[:top_n]
 
-def potential_routes(start_coords, closest_cars, end_coords, method='driving'):
-	first_legs = [{'start_coords' : current_location, 'end_coords' : car[1][1], 'mode' : 'walking'} for car in closest_cars]
-	last_legs = [{'start_coords' : car[1][1], 'end_coords' : end_coords, 'mode' : method, 'meta' : car[2]} for car in closest_cars]
+def potential_routes(start_coords, closest_cars, end_coords, method='driving', service='modo'):
+	first_legs = [Leg(start_coords, car[0], 'walking', None) for car in closest_cars]
+	last_legs = [Leg(car[0], end_coords, method, service, additional_data=car[1]) for car in closest_cars]
 	full_routes = zip(first_legs, last_legs)
-	return full_routes
+	return [Route(r) for r in full_routes]
 
 def get_mobi_data():
 	now = int(time.time())
@@ -46,7 +48,7 @@ def get_mobi_data():
 def get_trips_routes(start_coords, end_coords):
 	raw_data, start_time = get_mobi_data()
 	parsed_data = parse_mobi_data(raw_data, start_time)
-	closest_cars = get_closest_cars(current_location, parsed_data)
+	closest_cars = get_closest_cars(start_coords, parsed_data)
 	routes = potential_routes(start_coords, closest_cars, end_coords)
 	return routes
 
@@ -62,3 +64,6 @@ def get_route_cost(raw_route, membership_type):
 	response = requests.get(url)
 	resp_parsed = eval(response.text.replace('true', 'True').replace('false', 'False').replace('null', 'None'))
 	return float(resp_parsed['TotalCharge'])
+
+routes = get_trips_routes(start_coords, end_coords)
+print routes

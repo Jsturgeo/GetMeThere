@@ -38,7 +38,7 @@ def fit_with_distance_duration(legs):
                           Meters and seconds.
     '''
     for leg in legs:
-        dist_dur = get_distance_duration(leg['start_coord'], leg['end_coord'],
+        dist_dur = get_distance_duration(leg['start_coords'], leg['end_coords'],
                                          leg['mode'])
         distance = dist_dur['distance']['value']
         duration = dist_dur['duration']['value']

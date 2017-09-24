@@ -2,6 +2,8 @@ import requests
 import json
 from haversine import haversine
 from itertools import product
+from leg import Leg
+from route import Route
 
 mobi_url = 'https://mountainmath.ca/mobi/stations'
 
@@ -18,17 +20,17 @@ def get_closest_stations(start_coords, stations_data, top_n=3):
 	for station in stations_data:
 		if station['properties']['avl_bikes'] == 0 or not station['properties']['operative']:
 			continue
-		dist_from_current = haversine(station['geometry']['coordinates'], current_coords)
+		dist_from_current = haversine(station['geometry']['coordinates'], start_coords)
 		bikes_data.append((dist_from_current, station['properties']['name'], station['geometry']['coordinates']))
 	sorted_bikes = sorted(bikes_data, key=lambda x: x[0])
 	return sorted_bikes[:top_n]
 
-def potential_routes(start_coords, closest_stations_start, closest_stations_end, end_coords, method='bicycling'):
-	first_legs = [{'start_coords' : current_coords, 'end_coords' : station[2], 'mode' : 'walking'} for station in closest_stations_start]
-	last_legs = [{'start_coords' : station[2], 'end_coords' : end_coords, 'mode' : 'walking'} for station in closest_stations_end]
+def potential_routes(start_coords, closest_stations_start, closest_stations_end, end_coords, service='mobi', method='bicycling'):
+	first_legs = [Leg(start_coords, station[2], 'walking', 'None') for station in closest_stations_start]
+	last_legs = [Leg(station[2], end_coords, 'walking', 'None') for station in closest_stations_end]
 	first_and_last = list(product(first_legs, last_legs))
-	full_routes = [(fl[0], {'start_coords' : fl[0]['end_coords'], 'end_coords' : fl[1]['start_coords'], 'mode' : method}, fl[1]) for fl in first_and_last]
-	return full_routes
+	full_routes = [Leg(fl[0].end_coords, fl[1].start_coords, method, service) for fl in first_and_last]
+	return [Route(r) for r in full_routes]
 
 def get_trips_routes(start_coords, end_coords):
 	stations_data = get_mobi_stations_data()
@@ -37,7 +39,7 @@ def get_trips_routes(start_coords, end_coords):
 	routes = potential_routes(start_coords, closest_stations_start, closest_stations_end, end_coords)
 	return routes
 
-def get_route_cost(route, membership_type):
+def get_route_cost(raw_route, membership_type):
 	total_biking_time = sum(l['duration'] for l in route if l['mode'] == 'biking')
 	if total_biking_time <= 30:
 		return 0
@@ -57,3 +59,6 @@ def get_route_cost(route, membership_type):
 		return ceil(float(overage_time) / 30) * 3
 	else: #unknown membership type
 		return 0
+
+routes = get_trips_routes(start_coords, end_coords)
+print routes
