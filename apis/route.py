@@ -7,15 +7,20 @@ class Route:
 
 	@property
 	def cost(self):
-		return sum(l.cost for l in self.legs)
+		costs = [0 if x.cost is None else x.cost for x in self.legs]
+		return sum(costs)
 
 	@property
 	def duration(self):
-		return sum(l.duration for l in self.legs)
+		durations = [0 if x.duration is None else x.duration for x in self.legs]
+		return sum(durations)
+		# return sum(l.duration for l in self.legs)
 
 	@property
 	def total_walk_time(self):
-		return sum(l.duration for l in self.legs if l.mode == 'walking')
+		walking_legs = [x for x in self.legs if x.mode == 'walking']
+		durations = [0 if x.duration is None else x.duration for x in walking_legs]
+		return sum(durations)
 
 	def __str__(self):
 		return str('Duration: {} minutes, Cost: {}, Legs: {}'.format(int(float(self.duration) / 60), self.cost, [(l.start_coords, l.end_coords, l.mode) for l in self.legs]))
