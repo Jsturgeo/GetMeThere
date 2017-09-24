@@ -5,6 +5,7 @@ from itertools import product
 from google_maps_api import fit_with_distance_duration
 from leg import Leg
 from route import Route
+from math import ceil
 
 mobi_url = 'https://mountainmath.ca/mobi/stations'
 
@@ -42,29 +43,34 @@ def get_trips_routes(start_coords, end_coords):
 	routes = potential_routes(start_coords, closest_stations_start, closest_stations_end, end_coords)
 	return routes
 
-def get_route_cost(route, membership_type):
+def apply_route_cost(route, membership_type):
 	fit_with_distance_duration(route)
-	total_biking_time = sum(l.duration for l in route.legs if l.mode == 'biking')
-	if total_biking_time <= 30:
-		return 0
-	overage_time = total_biking_time - 30
-	if membership_type == '24_hour_pass':
-		return ceil(float(overage_time) / 30) * 5
-	elif membership_type in ('90_day_pass', '365_day_pass_standard'):
-		overage_cost = 2
-		if overage_time > 30:
+	for leg in route.legs:
+		if leg.mode == 'walking':
+			leg.cost = 0
+			continue
+		total_biking_time = float(leg.duration) / 60
+		if total_biking_time <= 30:
+			leg.cost = 0
+		overage_time = total_biking_time - 30
+		if membership_type == '24_hour_pass':
+			leg.cost = ceil(float(overage_time) / 30) * 5
+		elif membership_type in ('90_day_pass', '365_day_pass_standard'):
+			overage_cost = 2
+			if overage_time > 30:
+				overage_time += -30
+				overage_cost += ceil(float(overage_time) / 30) * 3
+			leg.cost = overage_cost
+		elif membership_type == '365_day_pass_plus':
+			if overage_time <= 30:
+				leg.cost = 0
 			overage_time += -30
-			overage_cost += ceil(float(overage_time) / 30) * 3
-		return overage_cost
-	elif membership_type == '365_day_pass_plus':
-		if overage_time <= 30:
-			return 0
-		overage_time += -30
-		return ceil(float(overage_time) / 30) * 3
-	else: #unknown membership type
-		return 0
+			leg.cost = ceil(float(overage_time) / 30) * 3
+		else: #unknown membership type
+			leg.cost = 0
 
-# routes = get_trips_routes(start_coords, end_coords)
-# print routes
-# for route in routes:
-# 	print get_route_cost(route, '24_hour_pass')
+def get_mobi_routes(start_coords, end_coords):
+	routes = get_trips_routes(start_coords, end_coords)
+	for route in routes:
+		apply_route_cost(route, '24_hour_pass')
+	return routes

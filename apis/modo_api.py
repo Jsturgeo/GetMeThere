@@ -54,19 +54,23 @@ def get_trips_routes(start_coords, end_coords):
 def squash_coords(coords):
 	return "{},{}".format(coords[0], coords[1])
 
-def get_route_cost(route, membership_type):
+def apply_route_cost(route, membership_type):
 	'''
 	only supporting 'Roaming' and 'Business' memberships for now since I can't figure out
 	why this API hates spaces in the URL
 	'''
 	fit_with_distance_duration(route)
-	driving_distance = sum(l.distance for l in route.legs if l.mode == 'driving')
-	driving_route = [l for l in route.legs if l.mode == 'driving'][0]
-	url = cost_url + membership_type + '/' + driving_route.additional_data['start_time'] + '/' + driving_route.additional_data['end_time'] + '/' + str(driving_route.distance)
-	response = requests.get(url)
-	resp_parsed = eval(response.text.replace('true', 'True').replace('false', 'False').replace('null', 'None'))
-	return float(resp_parsed['TotalCharge'])
+	for leg in route.legs:
+		if leg.mode == 'walking':
+			leg.cost = 0
+			continue
+		url = cost_url + membership_type + '/' + leg.additional_data['start_time'] + '/' + leg.additional_data['end_time'] + '/' + str(leg.distance)
+		response = requests.get(url)
+		resp_parsed = eval(response.text.replace('true', 'True').replace('false', 'False').replace('null', 'None'))
+		leg.cost = float(resp_parsed['TotalCharge'])
 
-# routes = get_trips_routes(start_coords, end_coords)
-# for route in routes:
-# 	print get_route_cost(route, 'Business')
+def get_modo_routes(start_coords, end_coords):
+	routes = get_trips_routes(start_coords, end_coords)
+	for route in routes:
+		apply_route_cost(route, 'Business')
+	return routes
