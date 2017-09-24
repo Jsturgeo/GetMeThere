@@ -44,7 +44,7 @@ def fit_with_distance_duration(legs):
         duration = dist_dur['duration']['value']
         leg['distance'] = distance
         leg['duration'] = duration
-    return leg
+    return legs
 
 def get_distance_duration(origin, destination, mode='walking'):
     '''Returns distance and duration based on two points and mode.
