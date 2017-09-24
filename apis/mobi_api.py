@@ -38,7 +38,7 @@ def get_trips_routes(start_coords, end_coords):
 	return routes
 
 def get_route_cost(route, membership_type):
-	total_biking_time = sum(l['time'] for l in route if l['mode'] == 'biking')
+	total_biking_time = sum(l['duration'] for l in route if l['mode'] == 'biking')
 	if total_biking_time <= 30:
 		return 0
 	overage_time = total_biking_time - 30

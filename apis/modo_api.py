@@ -3,6 +3,7 @@ import json
 import pprint
 import time
 from haversine import haversine
+from google_maps_api import fit_with_distance_duration
 
 start_coords = [-123.114867, 49.283481] # BCIT Downtown
 end_coords =  [-123.15113, 49.274196] # Kits Beach
@@ -49,14 +50,14 @@ def get_trips_routes(start_coords, end_coords):
 	routes = potential_routes(start_coords, closest_cars, end_coords)
 	return routes
 
-def get_route_cost(route, membership_type):
+def get_route_cost(raw_route, membership_type):
 	'''
 	only supporting 'Roaming' and 'Business' memberships for now since I can't figure out
 	why this API hates spaces in the URL
 	'''
+	route = fit_with_distance_duration(raw_route)
 	driving_distance = sum(l['distance'] for l in route if l['mode'] == 'driving')
 	driving_route = [l for l in route if l['mode'] == 'driving'][0]
-	https://bookit.modo.coop/api/cost/{plan_name}/{start_timestamp}/{end_timestamp}/{distance}
 	url = cost_url + membership_type + '/' + driving_route['meta']['start_time'] + '/' + driving_route['meta']['end_time'] + '/' + driving_route['distance']
 	response = requests.get(url)
 	resp_parsed = eval(response.text.replace('true', 'True').replace('false', 'False').replace('null', 'None'))
