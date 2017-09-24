@@ -2,10 +2,13 @@ import requests
 import json
 from haversine import haversine
 from itertools import product
-from google_maps_api import fit_with_distance_duration
+from google_maps_api import fit_with_distance_duration, get_directions_for_leg
 from leg import Leg
 from route import Route
 from math import ceil
+
+import pprint
+pp = pprint.PrettyPrinter(indent=2)
 
 mobi_url = 'https://mountainmath.ca/mobi/stations'
 
@@ -72,5 +75,9 @@ def apply_route_cost(route, membership_type):
 def get_mobi_routes(start_coords, end_coords):
 	routes = get_trips_routes(start_coords, end_coords)
 	for route in routes:
-		apply_route_cost(route, '24_hour_pass')
+		#apply_route_cost(route, '24_hour_pass')
+		for leg in route.legs:
+			pp.pprint(get_directions_for_leg(leg))
 	return routes
+
+get_mobi_routes(start_coords, end_coords)

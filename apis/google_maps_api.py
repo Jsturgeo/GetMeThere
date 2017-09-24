@@ -69,6 +69,22 @@ def get_distance_duration(origin, destination, mode='walking'):
     res = directions_result['rows'][0]['elements'][0]
     return res
 
+def get_directions_for_leg(leg, departure_time=datetime.now()):
+    '''
+    Returns directions based on start point, end point and mode of leg.
+
+    :param leg: Leg object
+
+    :returns dictionary of directions
+    '''
+    print 'calling func'
+    directions_result = gmaps.directions(squash_coords(leg.start_coords),
+                                     squash_coords(leg.end_coords),
+                                     mode=leg.mode,
+                                     departure_time=departure_time)
+    return directions_result
+
+
 load_dotenv(find_dotenv())
 gmaps = googlemaps.Client(key=os.environ.get('GMAP_API_KEY'))
 
