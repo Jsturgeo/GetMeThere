@@ -74,10 +74,10 @@ def apply_route_cost(route, membership_type):
 
 def get_mobi_routes(start_coords, end_coords):
 	routes = get_trips_routes(start_coords, end_coords)
-	for route in routes:
+	# for route in routes:
 		#apply_route_cost(route, '24_hour_pass')
-		for leg in route.legs:
-			pp.pprint(get_directions_for_leg(leg))
+		# for leg in route.legs:
+		# 	pp.pprint(get_directions_for_leg(leg))
 	return routes
 
 get_mobi_routes(start_coords, end_coords)
