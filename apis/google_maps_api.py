@@ -26,7 +26,11 @@ from dotenv import load_dotenv, find_dotenv
 
 MODES = ['driving', 'walking', 'bicycling', 'transit']
 
-def fit_with_distance_duration(legs):
+def squash_coords(coords):
+    return "{},{}".format(coords[0], coords[1])
+    #return tuple(coords)
+
+def fit_with_distance_duration(route):
     '''Enriches list of legs with information on travel distance and duration.
 
     Arguments:
@@ -37,14 +41,13 @@ def fit_with_distance_duration(legs):
                           'mode', 'distance', 'duration'.
                           Meters and seconds.
     '''
-    for leg in legs:
-        dist_dur = get_distance_duration(leg['start_coords'], leg['end_coords'],
-                                         leg['mode'])
+    for leg in route.legs:
+        dist_dur = get_distance_duration(squash_coords(leg.start_coords), squash_coords(leg.end_coords),
+                                         leg.mode)
         distance = dist_dur['distance']['value']
         duration = dist_dur['duration']['value']
-        leg['distance'] = distance
-        leg['duration'] = duration
-    return legs
+        leg.distance = distance
+        leg.duration = duration
 
 def get_distance_duration(origin, destination, mode='walking'):
     '''Returns distance and duration based on two points and mode.
